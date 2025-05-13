@@ -1,6 +1,10 @@
-import { QueryClientProvider } from "../../../node_modules/@tanstack/react-query/src/QueryClientProvider";
+"use client";
 
-import { QueryCache, QueryClient } from "@tanstack/react-query";
+import {
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "react-toastify";
 

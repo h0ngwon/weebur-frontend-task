@@ -1,29 +1,16 @@
 import type { Product, ProductsResponse } from "@/api/dto/product.dto";
-import { getProducts } from "@/api/productApi";
+import { searchProducts } from "@/api/productApi";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-export const PRODUCT_LIST_QUERY_KEY_PREFIX = "productsList";
+export const PRODUCT_SEARCH_QUERY_KEY_PREFIX = "productSearch";
 
 interface Options {
   initialLimit?: number;
-  sortBy?: string | undefined;
-  order?: "asc" | "desc" | undefined;
-  enabled?: boolean;
+  q: string;
 }
 
-export const useProducts = (options?: Options) => {
-  const { initialLimit = 20, sortBy, order, enabled = true } = options ?? {};
-
-  // queryKey에 정렬 조건 포함
-  const queryKeyParams: Record<string, string | number> = {
-    limit: initialLimit,
-  };
-  if (sortBy) {
-    queryKeyParams.sortBy = sortBy;
-    if (order) {
-      queryKeyParams.order = order;
-    }
-  }
+export const useSearchProducts = (options: Options) => {
+  const { initialLimit = 20, q } = options;
 
   return useInfiniteQuery<
     ProductsResponse,
@@ -32,17 +19,15 @@ export const useProducts = (options?: Options) => {
     (string | Record<string, unknown>)[],
     number
   >({
-    queryKey: [PRODUCT_LIST_QUERY_KEY_PREFIX, queryKeyParams],
+    queryKey: [PRODUCT_SEARCH_QUERY_KEY_PREFIX, { q, limit: initialLimit }],
     queryFn: async ({ pageParam = 0 }) =>
-      getProducts({
+      searchProducts({
+        q,
         limit: initialLimit,
         skip: pageParam,
-        sortBy: sortBy,
-        order: order,
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage: ProductsResponse) => {
-      // API 응답의 limit 또는 요청 시 initialLimit 사용
       const currentLimit = lastPage.limit || initialLimit;
       const nextSkip = lastPage.skip + currentLimit;
       if (nextSkip < lastPage.total) {
@@ -53,6 +38,6 @@ export const useProducts = (options?: Options) => {
     select: (data) => {
       return data.pages.flatMap((page) => page.products);
     },
-    enabled: enabled,
+    enabled: !!q,
   });
 };
